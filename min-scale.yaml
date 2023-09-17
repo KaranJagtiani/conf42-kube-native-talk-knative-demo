@@ -1,0 +1,27 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: hello
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/window: "6s" # stable window
+        autoscaling.knative.dev/scale-down-delay: "1s"
+        autoscaling.knative.dev/scale-to-zero-pod-retention-period: "1s"
+        autoscaling.knative.dev/scale-to-zero-grace-period: "1s"
+
+        # New annotations from the previous manifest
+        autoscaling.knative.dev/target: "10" # Soft limit of 10 requests concurrently
+        autoscaling.knative.dev/target-utilization-percentage: "80" # Scale up if 80% of target is reached
+        autoscaling.knative.dev/min-scale: "2" # Keep minimum of 2 PODs running to avoid the cold start problem
+        autoscaling.knative.dev/panic-window-percentage: "20.0" # 20% of the stable window, in this case 2s
+        autoscaling.knative.dev/panic-threshold-percentage: "150.0" # i.e. 1.5x of what a replica can handle
+    spec:
+      containers:
+        - image: ghcr.io/knative/helloworld-go:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: TARGET
+              value: "World"
